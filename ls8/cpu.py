@@ -11,6 +11,9 @@ class CPU:
         self.pc = 0
         self.ram = []
 
+    def hlt(self):
+        pass
+
     def load(self):
         """Load a program into memory."""
 
@@ -74,22 +77,25 @@ class CPU:
             instructions = self.ram[self.pc]
 
             if instructions == 0b10000010:#LDI = load into register
-                goes_into_register = self.ram[self.pc + 1]
+                reg_check = self.ram[self.pc + 1]
                 value = self.ram[self.pc + 2]
 
-                self.register[goes_into_register] = value
+                self.register[reg_check] = value
 
-                pc += 3
+                self.pc += 3
 
             elif instructions == 0b01000111:#PRN = print register
-                goes_into_register = self.ram[self.pc + 1]
-                print(self.register[goes_into_register])
+                reg_check = self.ram[self.pc + 1]
+                print(self.register[reg_check])
 
-                pc +=2
+                self.pc +=2
 
             elif instructions == 0b00000001:#HLT = halt
                 halted = True
-                pc += 1
+                self.pc += 1
+
+            else: print(f"Unknown unstruction at index{self.pc}")
+                sys.exit(1)
 
 # cpu = CPU()
 # print("WUT", cpu.load())
