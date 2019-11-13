@@ -9,31 +9,49 @@ class CPU:
         """Construct a new CPU."""
         self.register = [0] * 8
         self.pc = 0
-        self.ram = []
+        self.ram = [0] * 256
 
-    def hlt(self):
-        pass
-
-    def load(self):
+    def load(self, argv):
         """Load a program into memory."""
 
         address = 0
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        # for instruction in program:
+        #     self.ram[address] = instruction
+        #     address += 1
+
+        # print('SYS',sys.argv[0])
+        if len(sys.argv) != 2:
+            print("usage: comp.py filename")
+            sys.exit(1)
+    ​
+        progname = sys.argv[1]
+
+        with open(progname) as file:
+            for line in file:
+                line = line.split("#")[0] #splits and removes #, then reads first thing in line [0]
+                line = line.strip()  # lose whitespace
+
+                if line == '':
+                    continue
+
+                val = int(line) # LS-8 uses base 2!
+                #print(val)
+
+                self.ram[address] = val
+                address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -41,6 +59,8 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -72,29 +92,39 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+        HLT = 0b00000001
+        LDI = 0b10000010
+        PRN = 0b01000111
+        MUL = 0b10100010
+
         halted = False
         while not halted:
             instructions = self.ram[self.pc]
 
-            if instructions == 0b10000010:#LDI = load into register
-                reg_check = self.ram[self.pc + 1]
+            if instructions == LDI:#LDI = load into register
+                reg_slot = self.ram[self.pc + 1]
                 value = self.ram[self.pc + 2]
 
-                self.register[reg_check] = value
+                self.register[reg_slot] = value
 
                 self.pc += 3
 
-            elif instructions == 0b01000111:#PRN = print register
-                reg_check = self.ram[self.pc + 1]
-                print(self.register[reg_check])
+            elif instructions == PRN:#PRN = print register
+                reg_slot = self.ram[self.pc + 1]
+                print(self.register[reg_slot])
 
                 self.pc +=2
 
-            elif instructions == 0b00000001:#HLT = halt
+            elif instructions == MUL:#MUL = multiply
+                self.alu("MUL", self.ram[self.pc + 1], self.ram[self.pc + 1])
+                self.pc += 3
+
+            elif instructions == HLT:#HLT = halt
                 halted = True
                 self.pc += 1
 
-            else: print(f"Unknown unstruction at index{self.pc}")
+            else:
+                print(f"Unknown instruction at PC index {self.pc}")
                 sys.exit(1)
 
 # cpu = CPU()
