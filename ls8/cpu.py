@@ -11,7 +11,7 @@ class CPU:
         self.pc = 0
         self.ram = [0] * 256
 
-    def load(self, argv):
+    def load(self):
         """Load a program into memory."""
 
         address = 0
@@ -36,7 +36,7 @@ class CPU:
         if len(sys.argv) != 2:
             print("usage: comp.py filename")
             sys.exit(1)
-    ​
+
         progname = sys.argv[1]
 
         with open(progname) as file:
@@ -57,10 +57,10 @@ class CPU:
         """ALU operations."""
 
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.register[reg_a] += self.register[reg_b]
         #elif op == "SUB": etc
         elif op == "MUL":
-            self.reg[reg_a] *= self.reg[reg_b]
+            self.register[reg_a] *= self.register[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -86,7 +86,7 @@ class CPU:
         ), end='')
 
         for i in range(8):
-            print(" %02X" % self.reg[i], end='')
+            print(" %02X" % self.register[i], end='')
 
         print()
 
@@ -116,7 +116,7 @@ class CPU:
                 self.pc +=2
 
             elif instructions == MUL:#MUL = multiply
-                self.alu("MUL", self.ram[self.pc + 1], self.ram[self.pc + 1])
+                self.alu("MUL", self.ram[self.pc + 1], self.ram[self.pc + 2])
                 self.pc += 3
 
             elif instructions == HLT:#HLT = halt
