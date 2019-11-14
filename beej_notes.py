@@ -2,8 +2,10 @@ import sys
 ​
 PRINT_BEEJ = 1
 HALT = 2
-SAVE_REG = 3
+SAVE_REG = 3   # equivalent to LDI in the LS-8
 PRINT_REG = 4
+PUSH = 5
+POP = 6
 ​
 memory = [0] * 256
 ​
@@ -11,6 +13,10 @@ register = [0] * 8  # Like variables, fixed number of them, fixed names R0 R1 R2
 ​
 pc = 0  # Program Counter, current index, pointer to currently executing instruction
 halted = False
+​
+SP = 7
+​
+register[SP] = 0xf4  # initialize SP to empty stack
 ​
 #------------
 # Load memory
@@ -60,6 +66,23 @@ while not halted:
 	elif instruction == PRINT_REG:
 		reg_num = memory[pc + 1]
 		print(register[reg_num])
+​
+		pc += 2
+​
+	elif instruction == PUSH:
+		register[SP] -= 1  # decrement sp
+		reg_num = memory[pc + 1]
+		reg_val = register[reg_num]
+		memory[register[SP]] = reg_val  # copy reg value into memory at address SP
+​
+		pc += 2
+​
+	elif instruction == POP:
+		val = memory[register[SP]]
+		reg_num = memory[pc + 1]
+		register[reg_num] = val  # copy val from memory at SP into register
+​
+		register[SP] += 1  # increment SP
 ​
 		pc += 2
 ​

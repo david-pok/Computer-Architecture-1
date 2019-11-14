@@ -47,7 +47,7 @@ class CPU:
                 if line == '':
                     continue
 
-                val = int(line) # LS-8 uses base 2!
+                val = int(line, 2) # LS-8 uses base 2!
                 #print(val)
 
                 self.ram[address] = val
@@ -96,7 +96,10 @@ class CPU:
         LDI = 0b10000010
         PRN = 0b01000111
         MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0B01000110
 
+        stack_pointer = 7
         halted = False
         while not halted:
             instructions = self.ram[self.pc]
@@ -118,6 +121,23 @@ class CPU:
             elif instructions == MUL:#MUL = multiply
                 self.alu("MUL", self.ram[self.pc + 1], self.ram[self.pc + 2])
                 self.pc += 3
+
+            elif instructions == PUSH:
+                self.register[stack_pointer] -= 1
+                reg_slot = self.ram[self.pc + 1]
+                reg_value = self.register[reg_slot]
+                self.ram[self.register[stack_pointer]] = reg_value
+
+                self.pc += 2
+
+            elif instructions == POP:
+                reg_value = self.ram[self.register[stack_pointer]]
+                reg_slot = self.ram[self.pc + 1]
+                self.register[reg_slot] = reg_value
+
+                self.register[stack_pointer] += 1
+
+                self.pc +=2
 
             elif instructions == HLT:#HLT = halt
                 halted = True
