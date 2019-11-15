@@ -163,7 +163,7 @@ class CPU:
             elif instructions == RET:
                 # pop the return address off stack
 		        # store it in the pc
-                self.pc = self.ram[self.register[stack_pointer]]
+                self.program_counter = self.ram[self.register[stack_pointer]]
                 self.register[stack_pointer] += 1
 
             elif instructions == HLT:#HLT = halt
