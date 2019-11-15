@@ -8,7 +8,7 @@ class CPU:
     def __init__(self):
         """Construct a new CPU."""
         self.register = [0] * 8
-        self.pc = 0
+        self.program_counter = 0
         self.ram = [0] * 256
 
     def load(self):
@@ -77,12 +77,12 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+            self.program_counter,
             #self.fl,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.program_counter),
+            self.ram_read(self.program_counter + 1),
+            self.ram_read(self.program_counter + 2)
         ), end='')
 
         for i in range(8):
@@ -97,54 +97,81 @@ class CPU:
         PRN = 0b01000111
         MUL = 0b10100010
         PUSH = 0b01000101
-        POP = 0B01000110
+        POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
+        ADD = 0b10100000
 
         stack_pointer = 7
         halted = False
+
         while not halted:
-            instructions = self.ram[self.pc]
+            instructions = self.ram[self.program_counter]
 
             if instructions == LDI:#LDI = load into register
-                reg_slot = self.ram[self.pc + 1]
-                value = self.ram[self.pc + 2]
+                reg_slot = self.ram[self.program_counter + 1]
+                value = self.ram[self.program_counter + 2]
 
                 self.register[reg_slot] = value
 
-                self.pc += 3
+                self.program_counter += 3
 
             elif instructions == PRN:#PRN = print register
-                reg_slot = self.ram[self.pc + 1]
+                reg_slot = self.ram[self.program_counter + 1]
                 print(self.register[reg_slot])
 
-                self.pc +=2
+                self.program_counter +=2
+
+            elif instructions == ADD:
+                self.alu("ADD", self.ram[self.program_counter + 1], self.ram[self.program_counter + 2])
+                self.program_counter += 3
 
             elif instructions == MUL:#MUL = multiply
-                self.alu("MUL", self.ram[self.pc + 1], self.ram[self.pc + 2])
-                self.pc += 3
+                self.alu("MUL", self.ram[self.program_counter + 1], self.ram[self.program_counter + 2])
+                self.program_counter += 3
 
             elif instructions == PUSH:
                 self.register[stack_pointer] -= 1
-                reg_slot = self.ram[self.pc + 1]
+                reg_slot = self.ram[self.program_counter + 1]
                 reg_value = self.register[reg_slot]
                 self.ram[self.register[stack_pointer]] = reg_value
-
-                self.pc += 2
+                # print('reg',self.register[stack_pointer])
+                # print('ram',self.ram[self.register[stack_pointer]])
+                self.program_counter += 2
+                # self.trace()
 
             elif instructions == POP:
                 reg_value = self.ram[self.register[stack_pointer]]
-                reg_slot = self.ram[self.pc + 1]
+                reg_slot = self.ram[self.program_counter + 1]
                 self.register[reg_slot] = reg_value
 
                 self.register[stack_pointer] += 1
 
-                self.pc +=2
+                self.program_counter +=2
+                # self.trace()
+
+            elif instructions == CALL:
+                #push return address onto stack
+                return_address = self.program_counter + 2
+                self.register[stack_pointer] -= 1
+                self.ram[self.register[stack_pointer]] = return_address
+
+                #set the pc to the value in the register
+                reg_slot = self.ram[self.program_counter + 1]
+                self.program_counter = self.register[reg_slot]
+
+            elif instructions == RET:
+                # pop the return address off stack
+		        # store it in the pc
+                self.pc = self.ram[self.register[stack_pointer]]
+                self.register[stack_pointer] += 1
 
             elif instructions == HLT:#HLT = halt
                 halted = True
-                self.pc += 1
+                self.program_counter += 1
 
             else:
-                print(f"Unknown instruction at PC index {self.pc}")
+                print(f"Unknown instruction at program_counter index {self.program_counter}")
                 sys.exit(1)
 
 # cpu = CPU()
